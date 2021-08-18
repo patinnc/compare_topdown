@@ -11,7 +11,18 @@ if [ ! -e $INF ]; then
   exit 1
 fi
 
-grep -E "_r[kv][01]$" $INF   | awk '
+grep -E "_r[kv][01]$" $INF   | awk -v script="$0.$LINENO.awk" '
+ BEGIN{
+   list_repl_old = "%td_ret   %td_bs   %td_fe   %td_be"
+   list_repl_new = "%retiring %bad_spec %frt_end %bck_end";
+   n_replo = split(list_repl_old, arr_repl_old, " ");
+   n_repln = split(list_repl_new, arr_repl_new, " ");
+   if (n_replo != n_repln) {
+      printf("%s: n_replo= %d not eq n_repln= %d. bye\n", script, n_replo, n_repln) > "/dev/stderr";
+      err=1;
+      exit(1);
+   }
+ }
  {
    if ($NF == "_rk0" || $NF == "_rv0") {
     typ=1;
@@ -28,6 +39,12 @@ grep -E "_r[kv][01]$" $INF   | awk '
     for(i=1; i <= NF-1; i++) {
      v = $i;
      if (v == "time") {continue;}
+     for (jj=1; jj <= n_repln; jj++) {
+        if (arr_repl_old[jj] == v) {
+          v = arr_repl_new[jj];
+          break;
+        }
+     }
      if (!(v in hdr_list)) {
        hdr_list[v] = ++hdr_mx;
        hdr_lkup[hdr_mx] = v;
@@ -46,6 +63,10 @@ grep -E "_r[kv][01]$" $INF   | awk '
    }
  }
  END{
+   if (err == 1) {
+     printf("%s: exit awk script due to errs\n", script) > "/dev/stderr";
+     exit(1);
+   }
    for (j=1; j <= n0; j++) {
      file = dir[j] "/params.txt";
      str = "";
