@@ -34,10 +34,10 @@ awk -F, -v fmt="%8.3f" -v dirnm="$DIRNM" -v dlm=" " '
       i = lkup["L3MssBW"]; sv[i] = "";
   }
   /metric_CPI/{ i = lkup["IPC"]; sv[i] = sprintf(fmt, 1.0/$2); }
-  /metric_TMAM_Retiring.%./{ i = lkup["%retiring"]; sv[i] = sprintf(fmt, $2); }
-  /metric_TMAM_Bad_Speculation/{ i = lkup["%bad_spec"]; sv[i] = sprintf(fmt, $2); }
-  /metric_TMAM_Frontend_Bound/{ i = lkup["%frt_end"]; sv[i] = sprintf(fmt, $2); }
-  /metric_TMAM_Backend_bound/{ i = lkup["%bck_end"]; sv[i] = sprintf(fmt, $2); }
+  /metric_TMAM_Retiring.%.|metric_TMA_Retiring.%./{ i = lkup["%retiring"]; sv[i] = sprintf(fmt, $2); }
+  /metric_TMAM_Bad_Speculation|metric_TMA_Bad_Speculation/{ i = lkup["%bad_spec"]; sv[i] = sprintf(fmt, $2); }
+  /metric_TMAM_Frontend_Bound|metric_TMA_Frontend_Bound/{ i = lkup["%frt_end"]; sv[i] = sprintf(fmt, $2); }
+  /metric_TMAM_Backend_bound|metric_TMA_Backend_Bound/{ i = lkup["%bck_end"]; sv[i] = sprintf(fmt, $2); }
   /metric_package power/{ i = lkup["pkg_watts"]; sv[i] = sprintf(fmt, $2); }
   END {
 # avg_tot    0.023   98.947    2.700  373.124  169.602    0.001    0.998   49.922    0.006   28.375   21.698    0.653   99.216  132.456   85.557  230.987    0.005   21.772    0.004
