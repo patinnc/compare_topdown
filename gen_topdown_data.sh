@@ -9,15 +9,15 @@ catch_signal() {
 
 trap 'catch_signal' SIGINT
 
-VER=36
+VER=37
 SCR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 #echo "$0.$LINENO SCR_DIR= $SCR_DIR" > /dev/stderr
 # select my perf binary
 PATH=/root/60secs:$PATH  
 
 RT_DIR=/root
-DO_ITP_COLL=$RT_DIR/perfspect/perf-collect
-DO_ITP_POST=$RT_DIR/perfspect/perf-postprocess
+DO_ITP_COLL=$RT_DIR/itp/perf-collect
+DO_ITP_POST=$RT_DIR/itp/perf-postprocess
 DO_SPINX=$RT_DIR/60secs/extras/spin.x
 DO_PERF3=$RT_DIR/60secs/do_perf3.sh
 DO_GET_BW=$RT_DIR/60secs/get_bw.sh
@@ -33,11 +33,48 @@ ARR_WRK_TYP=("freq_sml")
 DUR_SECS=10
 TOP_DIR=`pwd`
 LST_MON_TYP="pid sys cpu"
-LST_MON_TOOL="pmu-tool itp itpLite"
 LST_WRK_SZ="$NUM_CPUS $NUM_HLF"
+LST_MON_TOOL="pmu-tool itp itpLite"
+LST_STAGE="print_data"
 LST_STAGE="echo_cmds gen_data print_data"
-ITERS=-1
 QUIT_AFTER_ITERS=-1  # if != -1 then quit after this iter. (ITERS % 2)==0 is echo cmds, 1 is do cmds
+OUT_ROOT=/root/output/cmp_topdown_icx_v$VER
+
+#LST_MON_TOOL="itpLite"
+#LST_MON_TYP="sys"
+#LST_WRK_SZ="$NUM_CPUS"
+
+ITERS=-1
+for i in $LST_MON_TOOL; do
+  if [ "$i" == "itp" ]; then
+    if [ ! -e $DO_ITP_COLL ]; then
+      echo "$0.$LINENO didn't find itp collect file $DO_ITP_COLL. bye"
+      exit 1
+    fi
+    if [ ! -e $DO_ITP_POST ]; then
+      echo "$0.$LINENO didn't find itp postprocess file $DO_ITP_POST. bye"
+      exit 1
+    fi
+  fi
+  if [ "$i" == "itpLite" ]; then
+    if [ ! -e $DO_PERF3 ]; then
+      echo "$0.$LINENO didn't find itpLite $DO_PERF3. bye"
+      exit 1
+    fi
+  fi
+  if [ "$i" == "pmu-tool" ]; then
+    if [ ! -e $DO_PMU_TOOL ]; then
+      echo "$0.$LINENO didn't find pmu-tool $DO_PMU_TOOL. bye"
+      exit 1
+    fi
+  fi
+done
+for i in $DO_SPINX $DO_GET_BW; do
+  if [ ! -e "$i" ]; then
+    echo "$0.$LINENO didn't find $i. bye"
+    exit 1
+  fi
+done
 
 for MON_TOOL in $LST_MON_TOOL; do
   for WRK_SZ in $LST_WRK_SZ; do
@@ -45,7 +82,7 @@ for MON_TOOL in $LST_MON_TOOL; do
      for ((w=0; w < ${#ARR_WRK_TYP[@]}; w++)); do
       WRK_TYP=${ARR_WRK_TYP[$w]}
       WRK_TYP_STR=`echo "$WRK_TYP" | sed 's/ /_/g'`
-      P=data/tst_v${VER}_${MON_TOOL}_${WRK_TYP_STR}_${WRK_SZ}cpus_${MON_TYP}
+      P=$OUT_ROOT/${MON_TOOL}_${WRK_TYP_STR}_${WRK_SZ}cpus_${MON_TYP}
       mkdir -p $P
       cd $P
       P=`pwd` # get abs path
